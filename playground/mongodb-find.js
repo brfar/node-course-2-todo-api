@@ -36,7 +36,7 @@ MongoClient.connect('mongodb://localhost:27017/TodoApi', (err, db) => {
 
 	db
 		.collection('Users')
-		.find({ name: 'Bruneidson' })
+		.find({ name: 'Bruno' })
 		.toArray()
 		.then(docs => {
 			console.log('results: ')
