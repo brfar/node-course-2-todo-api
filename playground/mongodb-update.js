@@ -1,5 +1,3 @@
-/*eslint-disable*/
-// const MongoClient = require('mongodb').MongoClient;
 const { MongoClient, ObjectID } = require('mongodb');
 
 MongoClient.connect('mongodb://localhost:27017/TodoApi', (err, db) => {
@@ -7,24 +5,26 @@ MongoClient.connect('mongodb://localhost:27017/TodoApi', (err, db) => {
 
 	console.log('connected to mongodb server');
 
-	// db
-	// 	.collection('Todo')
-	// 	.findOneAndUpdate(
-	// 		{
-	// 			_id: new ObjectID("5a404bfc2f64025f2fdb0cbb")
-	// 		},
-	// 		{
-	// 			$set: {
-	// 				completed: false
-	// 			}
-	// 		},
-	// 		{
-	// 			returnOriginal: false
-	// 		}
-	// 	)
-	// 	.then(result => {
-	// 		console.log(result);
-  //   });
+	// http://mongodb.github.io/node-mongodb-native/3.0/api/Collection.html#findOneAndUpdate
+	db
+		.collection('Todos')
+		.findOneAndUpdate(
+			{
+				_id: new ObjectID("5a404bfc2f64025f2fdb0cbb")
+			},
+			{
+				$set: {
+					// https://docs.mongodb.com/manual/reference/operator/update/
+					completed: false
+				}
+			},
+			{
+				returnOriginal: false
+			}
+		)
+		.then(result => {
+			console.log(result);
+    });
     
     db
       .collection('Users')
@@ -35,6 +35,7 @@ MongoClient.connect('mongodb://localhost:27017/TodoApi', (err, db) => {
           name: 'Breno'
         },
         $inc: {
+					// https://docs.mongodb.com/manual/reference/operator/update/inc/#up._S_inc
           age: 1
         }
       })

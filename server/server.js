@@ -1,3 +1,4 @@
+/* This is gonna be the root of the application; when we start the node app, this file is gonna run.*/
 var express = require('express');
 var bodyParser = require('body-parser');
 var { ObjectID } = require('mongodb');
