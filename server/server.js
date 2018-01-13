@@ -65,4 +65,4 @@ app.listen(3000, () => {
 	console.log('🔥  app is running 🔥');
 });
 
-module.exports = { app };
+module.exports = { app }; // For testing purposes

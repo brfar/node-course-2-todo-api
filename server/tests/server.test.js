@@ -1,4 +1,3 @@
-/*eslint-disable*/
 const expect = require('expect');
 const request = require('supertest');
 const { ObjectID } = require('mongodb');
@@ -17,6 +16,8 @@ const todos = [
 	}
 ];
 
+/* beforeEach let us run some code before every single test case. Here it is used to set up the database
+in a way that's useful. For now all we're gonna do is make sure the database is empty! */
 beforeEach(done => {
 	Todo.remove({})
 		.then(() => {
@@ -59,7 +60,7 @@ describe('POST /todos', () => {
 
 				Todo.find()
 					.then(todos => {
-						expect(todos.length).toBe(2);
+						expect(todos.length).toBe(0);
 						done();
 					})
 					.catch(e => done(e));
