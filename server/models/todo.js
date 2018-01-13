@@ -9,7 +9,8 @@ have a text attribute  (a string),  a completed attribute (a boolean) and these 
 The block below is a mongoose model, so mongoose knows how to store our data. */
 const Todo = mongoose.model('Todo', {
 	/* mongoose.model() takes as arguments, a string name and and object that defines the various
-	properties for a model. */
+	properties for a model. 
+	http://mongoosejs.com/docs/validation.html */
 	text: {
 		type: String,
 		required: true,
