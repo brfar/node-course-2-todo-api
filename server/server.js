@@ -25,7 +25,7 @@ app.post('/todos', (req, res) => {
 	var todo = new Todo({ // Creates an instance of 'Todo'
 		text: req.body.text
 	});
- 
+	
 	todo.save().then(
 		doc => {
 			res.send(doc);
