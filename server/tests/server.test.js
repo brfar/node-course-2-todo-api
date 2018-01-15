@@ -5,6 +5,7 @@ const { ObjectID } = require('mongodb');
 const { app } = require('./../server');
 const { Todo } = require('./../models/todo');
 
+// Dummy todos
 const todos = [
 	{
 		_id: new ObjectID(),
@@ -60,7 +61,7 @@ describe('POST /todos', () => {
 
 				Todo.find()
 					.then(todos => {
-						expect(todos.length).toBe(0);
+						expect(todos.length).toBe(2);
 						done();
 					})
 					.catch(e => done(e));
@@ -76,19 +77,19 @@ describe('GET /todos', () => {
 			.expect(res => {
 				expect(res.body.todos.length).toBe(2);
 			})
-			.end(done);
+			.end(done); // No need to provide a function to 'end' because we're not doing anything asynchronously.
 	});
 });
 
 describe('GET /todos/:id', () => {
 	it('should return todo doc', done => {
 		request(app)
-			.get(`/todos/${todos[0]._id.toHexString()}`)
+			.get(`/todos/${todos[0]._id.toHexString()}`) // toHexString() converts ObjectID to string.
 			.expect(200)
 			.expect(res => {
 				expect(res.body.todo.text).toBe(todos[0].text);
 			})
-			.end(done);
+			.end(done); 
 	});
 
 	it('should return 404 if todo not found', done => {

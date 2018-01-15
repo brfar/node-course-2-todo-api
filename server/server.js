@@ -10,6 +10,8 @@ var { User } = require('./models/user'); /* Pulls off the 'User' variable we're 
 that comes back from a call to 'require', requiring ./models/user */
 
 var app = express();
+/* process.env.PORT is only gonna be set when the app is deployed. If it's running locally it'll be 3000 */
+const port = process.env.PORT || 3000;
 
 /* bodyParser takes JSON and convert it into object, attaching it on the 'req' object 
 app.use takes the middleware. If we were writing a custom one it'd be a function, if we use a third party
@@ -61,8 +63,11 @@ app.get('/todos/:id', (req, res) => {
 		});
 });
 
-app.listen(3000, () => {
-	console.log('🔥  app is running 🔥');
+app.listen(port, () => {
+	console.log(`🔥  app is running 🔥  on port ${port}`);
 });
 
 module.exports = { app }; // For testing purposes
+
+/* On package.json '"start": "node server/sever.js"' is responsible for telling heroku how to start
+the project! */
