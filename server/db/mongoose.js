@@ -5,7 +5,7 @@ we wanna use. Here we tell mongoose we wanna use the built in promise library */
 mongoose.Promise = global.Promise;
 
 // Very similar to MongoClient.connect()
-mongoose.connect('mongodb://bruno:nodenodenode@ds255767.mlab.com:55767/nodejsdevcourse', {
+mongoose.connect('mongodb://localhost:27017/TodoApp' || 'mongodb://bruno:nodenodenode@ds255767.mlab.com:55767/nodejsdevcourse', {
 		useMongoClient: true
 	}
 );

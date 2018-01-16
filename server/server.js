@@ -6,7 +6,7 @@ var { ObjectID } = require('mongodb');
 
 var { mongoose } = require('./db/mongoose');
 var { Todo } = require('./models/todo');
-var { User } = require('./models/user'); /* Pulls off the 'User' variable we're getting from the object
+var {	User } = require('./models/user'); /* Pulls off the 'User' variable we're getting from the object
 that comes back from a call to 'require', requiring ./models/user */
 
 var app = express();
@@ -22,10 +22,11 @@ app.use(bodyParser.json());
 
 app.post('/todos', (req, res) => {
 	// console.log(req.body);
-	var todo = new Todo({ // Creates an instance of 'Todo'
+	var todo = new Todo({
+		// Creates an instance of 'Todo'
 		text: req.body.text
 	});
-	
+
 	todo.save().then(
 		doc => {
 			res.send(doc);
@@ -60,6 +61,22 @@ app.get('/todos/:id', (req, res) => {
 		})
 		.catch(e => {
 			res.status(400).send();
+		});
+});
+
+app.delete('/todos/:id', (req, res) => {
+	var id = req.params.id;
+
+	if (!ObjectID.isValid(id)) return res.status(404).send(); // Validates id
+
+	Todo.findByIdAndRemove(id)
+		.then(todo => {
+			if (!todo) return res.status(404).send();
+
+			res.send({ todo });
+		})
+		.catch(e => {
+			res.status(404).send();
 		});
 });
 
