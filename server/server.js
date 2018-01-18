@@ -1,4 +1,6 @@
 /* This is gonna be the root of the application; when we start the node app, this file is gonna run.*/
+require('./config/config');
+
 const _ = require('lodash');
 const express = require('express');
 const bodyParser = require('body-parser'); /* Lets us send JSON to the server. 
@@ -12,7 +14,7 @@ that comes back from a call to 'require', requiring ./models/user */
 
 var app = express();
 /* process.env.PORT is only gonna be set when the app is deployed. If it's running locally it'll be 3000 */
-const port = process.env.PORT || 3000;
+const port = process.env.PORT;
 
 /* bodyParser takes JSON and convert it into object, attaching it on the 'req' object 
 app.use takes the middleware. If we were writing a custom one it'd be a function, if we use a third party
@@ -105,7 +107,7 @@ app.patch('/todos/:id', (req, res) => {
 		body.completedAt = new Date().getTime();		
 	} else { // Not a boolean OR not true
 		body.completed = false;
-		body.completedAt = null; // Clear body.compleyedAt
+		body.completedAt = null; // Clear body.completedAt
 	}
 
 	/* http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate 
