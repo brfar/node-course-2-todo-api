@@ -5,7 +5,7 @@ const { ObjectID } = require('mongodb');
 const { app } = require('./../server');
 const { Todo } = require('./../models/todo');
 
-// Dummy todos
+// Dummy todos~
 const todos = [
 	{
 		_id: new ObjectID(),
