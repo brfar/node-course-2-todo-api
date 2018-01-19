@@ -129,7 +129,7 @@ app.listen(port, () => {
 	console.log(`🔥  app is running 🔥  on port ${port}`);
 });
 
-module.exports = { app }; // For testing purposes
+module.exports = { app }; // For testing purposes~
 
 /* On package.json '"start": "node server/sever.js"' is responsible for telling heroku how to start
 the project! */
