@@ -84,20 +84,44 @@ UserSchema.methods.generateAuthToken = function() {
 	});
 };
 
+/** Instead of accessing .methods, we're gonna access .statics which is an object, kinda like .methods although everything you add onto it
+ * turns into a model method as opposed to an instance method. */
 UserSchema.statics.findByToken = function (token) {
   var User = this;
-  var decoded;
+  /** Instance method get called with the individual document (line 67) 
+   * but model model methods get called with the model as the 'this' binding */
+  var decoded; 
+  /** Is gonna store the decoded JWT values. This is gonna be the return result from jwt.verify which we used over hashing.js
+   * The reason it's set to undefined is because the jwt.verify function will throw an error if anything goes wrong: if the secret
+   * doesn't match the secret the token was created with or if the token value was manipulated. That means we wanna be able to catch
+   * this error and do something with it. To do that we're gonna be using the try/catch block below.
+  */
 
   try {
+    /** If any errors happen in the try block, the code automatically stops execution and moves into the catch block.
+     * Here, we wanna test jwt.verify. We wanna see if this throw an error. We're gonna pass the token we wanna decode + the secret. */
     decoded = jwt.verify(token, 'abc123');
   } catch (e) {
     return Promise.reject();
+    /** This promise will get returned from findByToken, then over inside of server.js it'll get rejected so the 'then' success case
+     * will never fire. The .catch will tho.
+     * ^ same as:
+     * return new Promise((resolve, reject) => {
+     *   reject();
+     * })
+     */
   }
-
+  
+  /** If we're able to successfully decode the token that was passed in as the header, we're gonna call User.findOne to find the
+   * associated user, if any. This is gonna return a promise and we are going to return THAT in order to add some chaining. That means
+   * we can add a .then() call on to findByToken over in server.js
+   * Inside of 'tokens' (line 33) we have an array with 'access' and 'token' properties and we need to find users whose values
+   * match the ones we have. right */
   return User.findOne({
     '_id': decoded._id,
-    'tokens.token': token,
-    'tokens.access': 'auth'
+    'tokens.token': token, /** Find a user whose tokens array has an object where the token property equals the token property 
+    we have right here (line 89) */
+    'tokens.access': 'auth' /** Find a user where in their tokens array the access property is set to 'auth' */
   });
 };
 

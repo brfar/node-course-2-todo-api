@@ -150,6 +150,9 @@ app.post('/users', (req, res) => {
   })
 });
 
+/** This route is going to require authentication, which means you're gonna need to provide a valid x-auth token. 
+ * It's gonna find the associated user and it's gonna send that user back 
+*/
 app.get('/users/me', authenticate, (req, res) => {
   res.send(req.user);
 });
