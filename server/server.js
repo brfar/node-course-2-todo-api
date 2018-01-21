@@ -84,7 +84,7 @@ app.delete('/todos/:id', (req, res) => {
 });
 
 /* Route that lets you update a todo item; whether you wanna change the text or toggle it as completed.
-'patch' is what you use when you wanna update a resource.   */
+'patch' is what you use when you wanna update a resource. */
 app.patch('/todos/:id', (req, res) => {
 	var id = req.params.id; // Grab the id.
 
@@ -133,9 +133,17 @@ app.post('/users', (req, res) => {
 
   user.save() // Tries to save the document to the database
     .then(() => {
-      return user.generateAuthToken();
-  }).then(token => {
-    res.header('x-auth', token).send(user);
+      return user.generateAuthToken(); // Return it since it we're expecting a chaining promise
+  }).then(token => { // 'token' is what's returned on generateAuthToken() [user.js line 74]
+		res.header('x-auth', token).send(user);
+		/** We have to add on the header. We have to send the token back as an HTTP response header, which is the 
+		 * real goal here. To do that, we call .header on the response object. header() takes as arguments key value pairs:
+		 * they key is the header name and value is the value you wanna set the header to. Our header name will be x-auth.
+		 * When you prefix a header with x-auth, you're creating a custom header, which it's not necessarily a header that 
+		 * HTTP supports by default. It's a header you're using for our specific purposes. This application for example, we're
+		 * using a JWT token scheme, so we're creating a custom header to store that value. 
+		 * Next, we can pass in the value which is just going to be the token argument up above...
+	  */
   }).catch(e => {
     res.status(400).send(e);
   })
