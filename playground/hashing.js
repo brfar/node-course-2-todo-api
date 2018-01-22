@@ -4,6 +4,24 @@ const jwt = require('jsonwebtoken');
  * essentially gives it 2 functions: one to create the token and one to verify it. Instead of
  * adding all the code with the if/else, we just simply call these two utility functions.
  */
+const bcrypt = require('bcryptjs');
+
+var password = '123abc!';
+
+bcrypt.genSalt(10, (err, salt) => {
+  bcrypt.hash(password, salt, (err, hash) => {
+    console.log(hash);
+  });
+});
+
+var hashedPassword = '$2a$10$huAU4qTnQuGPifHEXfV9cOmPJ7p61oKaoXrY1WviiDAznE/rW8oLK';
+
+bcrypt.compare(password, hashedPassword, (err, res) => {
+  console.log(res);
+});
+
+//////////////////////////////////
+// 👾 USING JSON WEB TOKEN 👾 //
 
 var data = {
 	id: 10

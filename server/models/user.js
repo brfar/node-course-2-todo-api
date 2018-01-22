@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator'); // Handles the email validation
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 /** We can't add methods to 'User', so we have to switch how we're generating the model. The first object
  * passed as argument to mongoose.Schema was literally cut from mongoose.model below so we can now add
@@ -124,6 +125,21 @@ UserSchema.statics.findByToken = function (token) {
     'tokens.access': 'auth' /** Find a user where in their tokens array the access property is set to 'auth' */
   });
 };
+
+UserSchema.pre('save', function (next) {
+  var user = this;
+
+  if (user.isModified('password')) {
+    bcrypt.genSalt(10, (err, salt) => {
+      bcrypt.hash(user.password, salt, (err, hash) => {
+        user.password = hash;
+        next();
+      });
+    });
+  } else {
+    next();
+  }
+});
 
 const User = mongoose.model('User', UserSchema);
 
