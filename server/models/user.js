@@ -9,53 +9,53 @@ const bcrypt = require('bcryptjs');
  * methods. We now pass the variable UserSchema as the second argument to mongoose.model.
  */
 var UserSchema = new mongoose.Schema(
-	{
-		email: {
-			type: String,
-			required: true,
-			trim: true,
-			minlength: 1,
-			unique: true /* Guarantees that emails don't be duplicated. You can't sign up for an account if the email is already in use.  */,
-			validate: {
-				// http://mongoosejs.com/docs/validation.html
-				/* validate takes 'validator', a function that makes sure the value is valid, and a 'message' */
-				validator:
-					validator.isEmail /* Returns true or false
+  {
+    email: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 1,
+      unique: true /* Guarantees that emails don't be duplicated. You can't sign up for an account if the email is already in use.  */,
+      validate: {
+        // http://mongoosejs.com/docs/validation.html
+        /* validate takes 'validator', a function that makes sure the value is valid, and a 'message' */
+        validator:
+          validator.isEmail /* Returns true or false
       ^ is the same as:
       validator: value => validator.isEmail(value); */,
-				message: '{VALUE} is not a valid email'
-			}
-		},
-		password: {
-			type: String,
-			required: true,
-			minlength: 6 // Minimum length of the password 
-		},
-		tokens: [
-			{
-				access: {
-					type: String,
-					required: true
-				},
-				token: {
-					type: String,
-					required: true
-				}
-			}
-		]
-	},
-	{ usePushEach: true } // Without this line an error is thrown by MongoDB
+        message: '{VALUE} is not a valid email'
+      }
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 6 // Minimum length of the password 
+    },
+    tokens: [
+      {
+        access: {
+          type: String,
+          required: true
+        },
+        token: {
+          type: String,
+          required: true
+        }
+      }
+    ]
+  },
+  { usePushEach: true } // Without this line an error is thrown by MongoDB
 );
 
 /** This method determines what exactly gets send back when a mongoose model is converted into a JSON value  */
 UserSchema.methods.toJSON = function() {
-	var user = this;
-	var userObject = user.toObject();
-	/** toObject is responsible for taking your mongoose variable 'user' and converting it into a regular object
-	 * where only the properties available on the document exist. */
+  var user = this;
+  var userObject = user.toObject();
+  /** toObject is responsible for taking your mongoose variable 'user' and converting it into a regular object
+   * where only the properties available on the document exist. */
 
-	return _.pick(userObject, ['_id', 'email']);
-	/** With this, we'll be leaving off things like password and the tokens array which should not get returned. */
+  return _.pick(userObject, ['_id', 'email']);
+  /** With this, we'll be leaving off things like password and the tokens array which should not get returned. */
 };
 
 /** UserSchema.methods is an object and we can add on this object any method we like. These are gonna be
@@ -63,26 +63,26 @@ UserSchema.methods.toJSON = function() {
  * Your instance methods do have access to the individual document
  */
 UserSchema.methods.generateAuthToken = function() {
-	// Not using arrow function because we'll need the 'this' keyword.
-	/** When we call this generateAuthToken method, 'this' will be the document where the method was called on */
-	var user = this;
+  // Not using arrow function because we'll need the 'this' keyword.
+  /** When we call this generateAuthToken method, 'this' will be the document where the method was called on */
+  var user = this;
 
-	/** To create a new token (line 32) we need to get an access and token value  */
-	var access = 'auth';
-	/** As we've seen on hashing.js, jwt.sign takes an object we wanna sign and a secret value
-	 * The actual data we wanna sign is the user id. access is the other property we'll be adding on. */
-	var token = jwt.sign({ _id: user._id.toHexString(), access }, 'abc123').toString();
+  /** To create a new token (line 32) we need to get an access and token value  */
+  var access = 'auth';
+  /** As we've seen on hashing.js, jwt.sign takes an object we wanna sign and a secret value
+   * The actual data we wanna sign is the user id. access is the other property we'll be adding on. */
+  var token = jwt.sign({ _id: user._id.toHexString(), access }, 'abc123').toString();
 
-	/** Update the user tokens array with the necessary properties (line 32). This update the local
-	 * user modal but DO NOT save. */
-	user.tokens.push({ access, token });
+  /** Update the user tokens array with the necessary properties (line 32). This update the local
+   * user modal but DO NOT save. */
+  user.tokens.push({ access, token });
 
-	/** Save it. In server.js we're gonna need access to this token returned below to add another .then()
-	 * and to something with it in the callback function. In order to allow server.js to chain on to the promise,
-	 * we're gonna need to return it first. */
-	return user.save().then(() => {
-		return token; // To save it, we return the token created above.
-	});
+  /** Save it. In server.js we're gonna need access to this token returned below to add another .then()
+   * and to something with it in the callback function. In order to allow server.js to chain on to the promise,
+   * we're gonna need to return it first. */
+  return user.save().then(() => {
+    return token; // To save it, we return the token created above.
+  });
 };
 
 /** Instead of accessing .methods, we're gonna access .statics which is an object, kinda like .methods although everything you add onto it
@@ -126,6 +126,21 @@ UserSchema.statics.findByToken = function (token) {
   });
 };
 
+UserSchema.statics.findByCredentials = function (email, password) {
+  var User = this;
+
+  return User.findOne({email}).then((user) => {
+    if (!user) return Promise.reject();
+
+    return new Promise((resolve, reject) => {
+      // Use bcrypt.compare to compare password and user.password
+      bcrypt.compare(password, user.password, (err, res) => {
+        res ? resolve(user) : reject();
+      });
+    });
+  });
+};
+
 /** Mongoose middleware lets you run certain code before or after certain events. Eg an update event: we can run
  * some code before and/or after we update a model. In our case we wanna run some code before a document is ever 
  * saved to the database; We wanna make sure the hashed password is in place. 
@@ -135,15 +150,15 @@ UserSchema.statics.findByToken = function (token) {
 UserSchema.pre('save', function (next) {
   var user = this;
 
-	/** There's gonna be times where we save the document and we're never gonna have to updated the password, which
-	 * means the password will already be hashed. Imagine I save a document with the plaintext password, then the
-	 * password gets hashed. Later on I update something that's not the password, like the email. This middleware
-	 * is gonna run again, that means we're gonna hash our hash and the program is gonna break. We're gonna use a 
-	 * method available on our instance called isModified() - it takes an individual property like "password" and
-	 * returns true if "password" is modified and false if it's not, and we only wanna encrypt the password if it
-	 * was just modified, this is why we're wrapping it inside the 'if': if it's just been modified, we're gonna
-	 * hash the password, if not, we just gonna call next() moving on with the middleware. 
-	 */
+  /** There's gonna be times where we save the document and we're never gonna have to updated the password, which
+   * means the password will already be hashed. Imagine I save a document with the plaintext password, then the
+   * password gets hashed. Later on I update something that's not the password, like the email. This middleware
+   * is gonna run again, that means we're gonna hash our hash and the program is gonna break. We're gonna use a 
+   * method available on our instance called isModified() - it takes an individual property like "password" and
+   * returns true if "password" is modified and false if it's not, and we only wanna encrypt the password if it
+   * was just modified, this is why we're wrapping it inside the 'if': if it's just been modified, we're gonna
+   * hash the password, if not, we just gonna call next() moving on with the middleware. 
+   */
   if (user.isModified('password')) {
     bcrypt.genSalt(10, (err, salt) => {
       bcrypt.hash(user.password, salt, (err, hash) => {
@@ -160,11 +175,11 @@ const User = mongoose.model('User', UserSchema);
 
 /* To illustrate how it works:
 var user = new user({
-	email: 'andrew@example.com    '
+  email: 'andrew@example.com    '
 });
 
 user.save().then(doc => {
-	console.log('user saved', doc);
+  console.log('user saved', doc);
 }, e => console.log('unable to save user', e));
  */
 

@@ -90,31 +90,33 @@ app.patch('/todos/:id', (req, res) => {
 	var id = req.params.id; // Grab the id.
 
 	/* The request body is where the updates are gonna be stored. If I wanna set a todo's text to something else, I'd make a patch
-	request and set the text property equal to whatever I wanted the todo text to be. The problem is that someone can send any
-	property along - they could send along properties that aren't on the todo items or properties we don't want them to update.
-	In order to pull off just the properties we want users to update, we're gonna be using the 'pick' method from lodash. 
-	'pick' takes an object and an array of properties that you wanna pull off IF they exist. Eg, if the 'text' property exists,
-	we wanna pull that off of 'req.body' adding it to 'body'. 'text' and 'completed' are the only thing users can update. */
+  request and set the text property equal to whatever I wanted the todo text to be. The problem is that someone can send any
+  property along - they could send along properties that aren't on the todo items or properties we don't want them to update.
+  In order to pull off just the properties we want users to update, we're gonna be using the 'pick' method from lodash. 
+  'pick' takes an object and an array of properties that you wanna pull off IF they exist. Eg, if the 'text' property exists,
+  we wanna pull that off of 'req.body' adding it to 'body'. 'text' and 'completed' are the only thing users can update. */
 	var body = _.pick(req.body, ['text', 'completed']);
 
 	if (!ObjectID.isValid(id)) return res.status(404).send(); // Validates id
 
 	/* Checks the 'completed' value and use that value to set 'completed' at. If a user sets 'completed' to true, we wanna set
-	'completed' to a timestamp, if they set it to false we wanna clear that timestamp because the todo won't be completed. */
-	if (_.isBoolean(body.completed) && body.completed) { // If it is a boolean AND it's 'true':
+  'completed' to a timestamp, if they set it to false we wanna clear that timestamp because the todo won't be completed. */
+	if (_.isBoolean(body.completed) && body.completed) {
+		// If it is a boolean AND it's 'true':
 		/* Everything we set on 'body' is eventually gonna be updated in the model. We don't want the user to update everything, so
-		we've picked off some certain ones from req.body, but right here we can make some modifications of our own, setting this 
-		equal to the current timestamp: */
-		body.completedAt = new Date().getTime();		
-	} else { // Not a boolean OR not true
+    we've picked off some certain ones from req.body, but right here we can make some modifications of our own, setting this 
+    equal to the current timestamp: */
+		body.completedAt = new Date().getTime();
+	} else {
+		// Not a boolean OR not true
 		body.completed = false;
 		body.completedAt = null; // Clear body.completedAt
 	}
 
 	/* http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate 
-		 Model.findByIdAndUpdate(id, [update], [options], [callback])
-	$set ~> We can't just set key value pairs, we have the use MongoDB operators. $set takes a set of key value pairs and these
-	are gonna get set. Here it'll be 'body'. 'new' returns the updated object. */
+     Model.findByIdAndUpdate(id, [update], [options], [callback])
+  $set ~> We can't just set key value pairs, we have the use MongoDB operators. $set takes a set of key value pairs and these
+  are gonna get set. Here it'll be 'body'. 'new' returns the updated object. */
 	Todo.findByIdAndUpdate(id, { $set: body }, { new: true })
 		.then(todo => {
 			if (!todo) return res.status(404).send();
@@ -128,33 +130,52 @@ app.patch('/todos/:id', (req, res) => {
 
 // POST /users
 app.post('/users', (req, res) => {
-  var body = _.pick(req.body, ['email', 'password']); // Line 91 explains wtf that does
-  var user = new User(body); /* Creates new instance of the User model. This takes an object with the email
+	var body = _.pick(req.body, ['email', 'password']); // Line 91 explains wtf that does
+	var user = new User(body); /* Creates new instance of the User model. This takes an object with the email
   and password properties. Since those properties are on "body" already, we can just put "body" here. */
 
-  user.save() // Tries to save the document to the database
-    .then(() => {
-      return user.generateAuthToken(); // Return it since it we're expecting a chaining promise
-  }).then(token => { // 'token' is what's returned on generateAuthToken() [user.js line 74]
-		res.header('x-auth', token).send(user);
-		/** We have to add on the header. We have to send the token back as an HTTP response header, which is the 
-		 * real goal here. To do that, we call .header on the response object. header() takes as arguments key value pairs:
-		 * they key is the header name and value is the value you wanna set the header to. Our header name will be x-auth.
-		 * When you prefix a header with x-auth, you're creating a custom header, which it's not necessarily a header that 
-		 * HTTP supports by default. It's a header you're using for our specific purposes. This application for example, we're
-		 * using a JWT token scheme, so we're creating a custom header to store that value. 
-		 * Next, we can pass in the value which is just going to be the token argument up above...
-	  */
-  }).catch(e => {
-    res.status(400).send(e);
-  })
+	user
+		.save() // Tries to save the document to the database
+		.then(() => {
+			return user.generateAuthToken(); // Return it since it we're expecting a chaining promise
+		})
+		.then(token => {
+			// 'token' is what's returned on generateAuthToken() [user.js line 74]
+			res.header('x-auth', token).send(user);
+			/** We have to add on the header. We have to send the token back as an HTTP response header, which is the
+			 * real goal here. To do that, we call .header on the response object. header() takes as arguments key value pairs:
+			 * they key is the header name and value is the value you wanna set the header to. Our header name will be x-auth.
+			 * When you prefix a header with x-auth, you're creating a custom header, which it's not necessarily a header that
+			 * HTTP supports by default. It's a header you're using for our specific purposes. This application for example, we're
+			 * using a JWT token scheme, so we're creating a custom header to store that value.
+			 * Next, we can pass in the value which is just going to be the token argument up above...
+			 */
+		})
+		.catch(e => {
+			res.status(400).send(e);
+		});
 });
 
-/** This route is going to require authentication, which means you're gonna need to provide a valid x-auth token. 
- * It's gonna find the associated user and it's gonna send that user back 
-*/
+/** This route is going to require authentication, which means you're gonna need to provide a valid x-auth token.
+ * It's gonna find the associated user and it's gonna send that user back
+ */
 app.get('/users/me', authenticate, (req, res) => {
-  res.send(req.user);
+	res.send(req.user);
+});
+
+// POST /users/login {email, password}
+app.post('/users/login', (req, res) => {
+	var body = _.pick(req.body, ['email', 'password']);
+
+	User.findByCredentials(body.email, body.password)
+		.then(user => {
+			return user.generateAuthToken().then(token => {
+				res.header('x-auth', token).send(user);
+			});
+		})
+		.catch(e => {
+			res.status(400).send();
+		});
 });
 
 app.listen(port, () => {
