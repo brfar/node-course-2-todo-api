@@ -126,14 +126,28 @@ UserSchema.statics.findByToken = function (token) {
   });
 };
 
+/** Takes an email/password as argument and return a promise with a user or an error if the user don't exist. */
 UserSchema.statics.findByCredentials = function (email, password) {
   var User = this;
 
+  /** We need to try to find a user where the email equals the email that was passed in. It'd be nice if we could do that with the
+   * password as well but we can't; we have the plain text password here, we do not have the plain text password stored in the database
+   * so we can't query that data. In order to find a potential match we're gonna find the user that does have the email of the email 
+   * passed in. */
   return User.findOne({email}).then((user) => {
-    if (!user) return Promise.reject();
+    /** We're returning the line above because we're chaining this promise since we're added a .then/.catch call on server.js
+     * The .then() on line above is because we have to verify that the password also matches. All of the is gonna happen inside
+     * this .then() call */
+    if (!user) return Promise.reject(); // Returns a rejected promise if there's no user
 
+    /** bcrypt only support callbacks, it does not support promises. So, to keep working with promises, we have to return a new Promise 
+     * where we're gonna pass 'resolve' and 'reject' in case something goes wrong. Inside this promise we'll use bcrypt.compare to 
+     * compare the password on line 130 with the user.password property. That means inside serve.js we're gonna be able to do something
+     * with the user when it comes back.
+    */
     return new Promise((resolve, reject) => {
-      // Use bcrypt.compare to compare password and user.password
+      /** Compares the password given to the hashed password. Since compare() returns true or false, we're checking
+       * if res is true. If it is, then we'll resolve this promise. If not, we'll reject it. */
       bcrypt.compare(password, user.password, (err, res) => {
         res ? resolve(user) : reject();
       });
