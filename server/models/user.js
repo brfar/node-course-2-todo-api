@@ -126,14 +126,29 @@ UserSchema.statics.findByToken = function (token) {
   });
 };
 
+/** Mongoose middleware lets you run certain code before or after certain events. Eg an update event: we can run
+ * some code before and/or after we update a model. In our case we wanna run some code before a document is ever 
+ * saved to the database; We wanna make sure the hashed password is in place. 
+ * pre() runs the code before the event. The event is saved and after that the code is run. We call next() when 
+ * we're done and that's when the model gets saved to the database. Here we're gonna salt and hash the password
+ * before saving it to the database: */
 UserSchema.pre('save', function (next) {
   var user = this;
 
+	/** There's gonna be times where we save the document and we're never gonna have to updated the password, which
+	 * means the password will already be hashed. Imagine I save a document with the plaintext password, then the
+	 * password gets hashed. Later on I update something that's not the password, like the email. This middleware
+	 * is gonna run again, that means we're gonna hash our hash and the program is gonna break. We're gonna use a 
+	 * method available on our instance called isModified() - it takes an individual property like "password" and
+	 * returns true if "password" is modified and false if it's not, and we only wanna encrypt the password if it
+	 * was just modified, this is why we're wrapping it inside the 'if': if it's just been modified, we're gonna
+	 * hash the password, if not, we just gonna call next() moving on with the middleware. 
+	 */
   if (user.isModified('password')) {
     bcrypt.genSalt(10, (err, salt) => {
       bcrypt.hash(user.password, salt, (err, hash) => {
-        user.password = hash;
-        next();
+        user.password = hash; // user.password just the plaintext. Here we override the value to the hashed version. 
+        next(); // Move on to save the document
       });
     });
   } else {
@@ -154,3 +169,4 @@ user.save().then(doc => {
  */
 
 module.exports = { User };
+

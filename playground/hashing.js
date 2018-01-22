@@ -8,17 +8,29 @@ const bcrypt = require('bcryptjs');
 
 var password = '123abc!';
 
+/** genSalt() generates a salt we can use to salt our password and hash() actually goes through the hashing process.
+ * genSalt() takes 2 arguments: the first one is the number of rounds you wanna use to generate the salt. The bigger
+ * the number, the longer the algorithm is gonna take. The second is a callback function, where the hashing is actually
+ * going to happen via hash(). hash() takes 3 arguments: the thing to hash, the salt that was just generated on genSalt()
+ * and a callback function. The 'hash' value from the callback function is what we're gonna store in our database.
+ */
 bcrypt.genSalt(10, (err, salt) => {
   bcrypt.hash(password, salt, (err, hash) => {
     console.log(hash);
   });
 });
 
-var hashedPassword = '$2a$10$huAU4qTnQuGPifHEXfV9cOmPJ7p61oKaoXrY1WviiDAznE/rW8oLK';
+var hashedPassword = '$2a$10$huAU4qTnQuGPifHEXfV9cOmPJ7p61oKaoXrY1WviiDAznE/rW8oLK'; // Result generated on line 19
 
+/** This is used to compare if the hash above is equal the plaintext password. This is what we're gonna do when
+ * someone logs in. compare() takes the plain value (the password), the hash value and then lets you know it those
+ * equal each other. It also takes a callback function that returns true or false */
 bcrypt.compare(password, hashedPassword, (err, res) => {
   console.log(res);
 });
+/** This is what we're gonna do when logging a user: we're gonna fetch the hash version of the password out of the database, 
+ * we're gonna compare it to the plaintext value they gave us and then we'll be able to use this response variable to determine
+ * whether or not the password is correct. */
 
 //////////////////////////////////
 // 👾 USING JSON WEB TOKEN 👾 //
