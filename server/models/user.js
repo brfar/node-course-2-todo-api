@@ -85,11 +85,17 @@ UserSchema.methods.generateAuthToken = function() {
   });
 };
 
+/** removeToken needs the token to be deleted. This method returns a promise, that's why we're returning the result on line 92 */
 UserSchema.methods.removeToken = function (token) {
   var user = this;
 
   return user.update({
-    $pull: {
+    /** .update() updates an array of tokens (line 34). We wanna remove any object from the array that has a token property 
+     * equal to the value that we passed in. In order to get that done, we're using $pull - that lets you remove items from
+     * an array that match certain criteria. $pull gets set equal to an object that we can define what we wanna pull from.
+     * We're gonna pull from the 'tokens' array any object that has the token property equal to the token argument passed here.
+     */
+    $pull: { // https://docs.mongodb.com/manual/reference/operator/update/pull/
       tokens: { token }
     }
   });
@@ -208,4 +214,3 @@ user.save().then(doc => {
  */
 
 module.exports = { User };
-

@@ -191,7 +191,17 @@ app.post('/users/login', (req, res) => {
     });
 });
 
+/** Logs out a user by removing the token from the 'tokens' array. Since we're trying to remove something, we'll be using a delete route.
+ * The url will be /users/me/token. We don't need to pass in the token value via the body or some sorta URL parameter, instead we're 
+ * just gonna make this route private, which means you're gonna have to be authenticated in order to ever run the code. Inside of our
+ * authentication middleware we store the token used, so we'll be able to grab that token value out. To add authentication, all we
+ * have to do is specify the 'authenticate' middleware just like we did for the other private route. */
 app.delete('/users/me/token', authenticate, (req, res) => {
+  /** removeToken needs to know which token you wanna remove. The .then() is because this returns a promise since
+   * we're gonna need to respond to the user once the token has been deleted. We don't need any arguments in the .then()
+   * we just need to know when the token was deleted so we can respond. If things don't go well, we're handling it in the 
+   * second argument to .then()
+   */
   req.user.removeToken(req.token).then(() => {
     res.status(200).send();
   }, () => {

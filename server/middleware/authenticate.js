@@ -12,13 +12,10 @@ var authenticate = (req, res, next) => {
 	 * of the user associated with the token. */
 	User.findByToken(token)
 		.then(user => {
-			if (!user) {
-				return Promise.reject();
-				/** Usually we would copy the exact same thing on line 26, but we can return Promise.reject() and the 'catch'
-				 * block on line 27 will be called. So we don't have to duplicate code.
-				 */
-			}
-
+			if (!user) return Promise.reject();
+			/** Usually we would copy the exact same thing on line 26, but we can return Promise.reject() and the 'catch'
+			 * block on line 27 will be called. So we don't have to duplicate code.
+			*/
 			req.user = user; // Modifies req.user to the user we just found
 			req.token = token; // Same as above
 			/** Now that we have 'request' modified, we're gonna be able to use that data by accessing it over server.js (line 156) */
