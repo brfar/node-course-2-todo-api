@@ -68,6 +68,7 @@ app.get('/todos/:id', authenticate, (req, res) => {
 
   if (!ObjectID.isValid(id)) return res.status(404).send();
 
+  /** Query only todos created by that user */
   Todo.findOne({
     _id: id,
     _creator: req.user._id
@@ -87,6 +88,8 @@ app.delete('/todos/:id', authenticate, (req, res) => {
 
   if (!ObjectID.isValid(id)) return res.status(404).send();
 
+  /** We were using findByIdAndRemove but now we wanna find by id AND creator, that's why
+   * we're using findOneAndRemove now */
   Todo.findOneAndRemove({
     _id: id,
     _creator: req.user._id
@@ -130,17 +133,30 @@ app.patch('/todos/:id', authenticate, (req, res) => {
     body.completedAt = null; // Clear body.completedAt
   }
 
-  /* http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate 
+  /* http://mongoosejs.com/docs/api.html#findoneandupdate_findOneAndUpdate 
      Model.findByIdAndUpdate(id, [update], [options], [callback])
   $set ~> We can't just set key value pairs, we have the use MongoDB operators. $set takes a set of key value pairs and these
   are gonna get set. Here it'll be 'body'. 'new' returns the updated object. */
-  Todo.findOneAndUpdate({_id: id, _creator: req.user._id}, {$set: body}, {new: true}).then((todo) => {
-    if (!todo) return res.status(404).send();
+  Todo.findOneAndUpdate(
+    {
+      _id: id,
+      _creator: req.user._id
+    },
+    {
+      $set: body
+    },
+    {
+      new: true
+    }
+  )
+    .then(todo => {
+      if (!todo) return res.status(404).send();
 
-    res.send({ todo });
-  }).catch(e => {
-    res.status(400).send();
-  })
+      res.send({ todo });
+    })
+    .catch(e => {
+      res.status(400).send();
+    });
 });
 
 // POST /users
