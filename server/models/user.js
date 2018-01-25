@@ -71,7 +71,7 @@ UserSchema.methods.generateAuthToken = function() {
   var access = 'auth';
   /** As we've seen on hashing.js, jwt.sign takes an object we wanna sign and a secret value
    * The actual data we wanna sign is the user id. access is the other property we'll be adding on. */
-  var token = jwt.sign({ _id: user._id.toHexString(), access }, 'abc123').toString();
+  var token = jwt.sign({ _id: user._id.toHexString(), access }, process.env.JWT_SECRET).toString();
 
   /** Update the user tokens array with the necessary properties (line 32). This update the local
    * user modal but DO NOT save. */
@@ -117,7 +117,7 @@ UserSchema.statics.findByToken = function (token) {
   try {
     /** If any errors happen in the try block, the code automatically stops execution and moves into the catch block.
      * Here, we wanna test jwt.verify. We wanna see if this throw an error. We're gonna pass the token we wanna decode + the secret. */
-    decoded = jwt.verify(token, 'abc123');
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
   } catch (e) {
     return Promise.reject();
     /** This promise will get returned from findByToken, then over inside of server.js it'll get rejected so the 'then' success case
