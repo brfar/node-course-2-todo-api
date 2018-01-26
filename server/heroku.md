@@ -53,15 +53,46 @@ mongoose.connect('mongodb://bruno:nodenodenode@ds255767.mlab.com:55767/nodejsdev
 ### 5. Push application to Heroku
 
 ```
-git push heroku master
+$ git push heroku master
 ```
 
 To open the app on the browser:
 ```
-heroku open
+$ heroku open
 ```
 
 To check the logs:
 ```
-heroku logs
+$ heroku logs
 ```
+___
+
+### Some useful Heroku commands
+
+Show your config variables:
+```
+$ heroku config
+```
+
+Set an enviroment variable. As a test, we're setting a variable NAME equals to Bruno:
+```
+$ heroku config:set NAME=Bruno
+```
+
+Get the variable property. This will return "Bruno":
+```
+$ heroku config:get NAME
+```
+
+Removes an enviroment variable:
+```
+$ heroku config:unset NAME
+```
+
+We have to set the JWT_SECRET on Heroku, otherwise our app would break once its online. To do that we could do something like this:
+
+```
+$ heroku config:set JWT_SECRET=nodshfufkjgfl
+```
+
+Bingo!

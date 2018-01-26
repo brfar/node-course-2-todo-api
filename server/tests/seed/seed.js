@@ -1,3 +1,6 @@
+/** process.env.JWT_SECRET holds the secret (it's in /server/config.json). it's a bad idea
+ * to leave the secret exposed in the code.
+ */
 const {ObjectID} = require('mongodb');
 const jwt = require('jsonwebtoken');
 
