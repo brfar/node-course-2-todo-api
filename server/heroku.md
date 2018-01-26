@@ -96,3 +96,23 @@ $ heroku config:set JWT_SECRET=nodshfufkjgfl
 ```
 
 Bingo!
+
+___
+
+### Setting up Robo 3T with Heroku MongoDB link
+
+MongoDB link used in heroku:
+```
+mongodb://bruno:node911@ds255767.mlab.com:55767/nodejsdevcourse
+```
+*On "Connection"* <br>
+"Name" is just the db name <br>
+"Address" is everything between the `@` and `:` <br>
+"Port" is the number between `:` and `/`
+![Robo3T](robo3t_01.png)
+
+*On "Authentication"* <br>
+"Database" is the db name after the last `/` <br>
+"Username" is the word between `//` and `:` <br>
+"Password" is the word between `:` and `@`
+![Robo3T](robo3t_02.png)
