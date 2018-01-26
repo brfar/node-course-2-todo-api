@@ -9,9 +9,7 @@ const { ObjectID } = require('mongodb');
 
 var { mongoose } = require('./db/mongoose');
 var { Todo } = require('./models/todo');
-var {
-  User
-} = require('./models/user'); /* Pulls off the 'User' variable we're getting from the object
+var { User } = require('./models/user'); /* Pulls off the 'User' variable we're getting from the object
 that comes back from a call to 'require', requiring ./models/user */
 var { authenticate } = require('./middleware/authenticate');
 
@@ -162,9 +160,7 @@ app.patch('/todos/:id', authenticate, (req, res) => {
 // POST /users
 app.post('/users', (req, res) => {
   var body = _.pick(req.body, ['email', 'password']); // Line 91 explains wtf that does
-  var user = new User(
-    body
-  ); /* Creates new instance of the User model. This takes an object with the email
+  var user = new User(body); /* Creates new instance of the User model. This takes an object with the email
   and password properties. Since those properties are on "body" already, we can just put "body" here. */
 
   user
