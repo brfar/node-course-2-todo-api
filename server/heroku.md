@@ -29,7 +29,7 @@ Tell Heroku which Node version to use:
 
 ### 3. Setting a real MongoDB database
 
-After creating a new database on mLab, go to `Users` then `Add datatabase user` then copy the link highlighted replacing `<dbuser>` and `<dbpassword>` with the one you just created.
+After creating a new database on mLab, go to `Users` then `Add database user` then copy the link highlighted replacing `<dbuser>` and `<dbpassword>` with the one you just created.
 
 ![mLab](capture.png)
 
@@ -74,7 +74,7 @@ Show your config variables:
 $ heroku config
 ```
 
-Set an enviroment variable. As a test, we're setting a variable NAME equals to Bruno:
+Set an environment variable. As a test, we're setting a variable NAME equals to Bruno:
 ```
 $ heroku config:set NAME=Bruno
 ```
@@ -84,7 +84,7 @@ Get the variable property. This will return "Bruno":
 $ heroku config:get NAME
 ```
 
-Removes an enviroment variable:
+Removes an environment variable:
 ```
 $ heroku config:unset NAME
 ```
