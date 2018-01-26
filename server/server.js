@@ -9,7 +9,9 @@ const { ObjectID } = require('mongodb');
 
 var { mongoose } = require('./db/mongoose');
 var { Todo } = require('./models/todo');
-var { User } = require('./models/user'); /* Pulls off the 'User' variable we're getting from the object
+var {
+  User
+} = require('./models/user'); /* Pulls off the 'User' variable we're getting from the object
 that comes back from a call to 'require', requiring ./models/user */
 var { authenticate } = require('./middleware/authenticate');
 
@@ -24,11 +26,15 @@ getting called as a function. The return value from this JSON method is a functi
 middleware we need to give to 'express' */
 app.use(bodyParser.json());
 
-app.post('/todos', (req, res) => { 
-  // console.log(req.body); 
-  var todo = new Todo({  
-    // Creates an instance of 'Todo' 
-    text: req.body.text 
+/** Make the todo routes private and only lets users manage the todos they created.
+ * the 'authenticate' middleware guarantees this route is private.
+ */
+app.post('/todos', authenticate, (req, res) => {
+  // console.log(req.body);
+  var todo = new Todo({
+    // Create an instance of 'Todo'
+    text: req.body.text,
+    _creator: req.user._id // This is the id of the user!
   });
 
   todo.save().then(
@@ -41,8 +47,13 @@ app.post('/todos', (req, res) => {
   );
 });
 
-app.get('/todos', (req, res) => {
-  Todo.find().then(
+/** 'authenticate' makes route private. This is gonna require that an x-auth token is used when
+ * you're fetching todos. And instead of fetching all todos, on line 53 we're simply gonna fetch
+ * todos where the _creator equals the id of the user that is currently authenticated. */
+app.get('/todos', authenticate, (req, res) => {
+  Todo.find({
+    _creator: req.user._id // Returns only todos created by that user
+  }).then(
     todos => {
       res.send({ todos });
     },
@@ -52,12 +63,16 @@ app.get('/todos', (req, res) => {
   );
 });
 
-app.get('/todos/:id', (req, res) => {
+app.get('/todos/:id', authenticate, (req, res) => {
   var id = req.params.id;
 
   if (!ObjectID.isValid(id)) return res.status(404).send();
 
-  Todo.findById(id)
+  /** Query only todos created by that user */
+  Todo.findOne({
+    _id: id,
+    _creator: req.user._id
+  })
     .then(todo => {
       if (!todo) return res.status(404).send();
 
@@ -68,25 +83,30 @@ app.get('/todos/:id', (req, res) => {
     });
 });
 
-app.delete('/todos/:id', (req, res) => {
+app.delete('/todos/:id', authenticate, (req, res) => {
   var id = req.params.id;
 
-  if (!ObjectID.isValid(id)) return res.status(404).send(); // Validates id
+  if (!ObjectID.isValid(id)) return res.status(404).send();
 
-  Todo.findByIdAndRemove(id)
+  /** We were using findByIdAndRemove but now we wanna find by id AND creator, that's why
+   * we're using findOneAndRemove now */
+  Todo.findOneAndRemove({
+    _id: id,
+    _creator: req.user._id
+  })
     .then(todo => {
       if (!todo) return res.status(404).send();
 
       res.send({ todo });
     })
     .catch(e => {
-      res.status(404).send();
+      res.status(400).send();
     });
 });
 
 /* Route that lets you update a todo item; whether you wanna change the text or toggle it as completed.
 'patch' is what you use when you wanna update a resource. */
-app.patch('/todos/:id', (req, res) => {
+app.patch('/todos/:id', authenticate, (req, res) => {
   var id = req.params.id; // Grab the id.
 
   /* The request body is where the updates are gonna be stored. If I wanna set a todo's text to something else, I'd make a patch
@@ -113,11 +133,22 @@ app.patch('/todos/:id', (req, res) => {
     body.completedAt = null; // Clear body.completedAt
   }
 
-  /* http://mongoosejs.com/docs/api.html#model_Model.findByIdAndUpdate 
+  /* http://mongoosejs.com/docs/api.html#findoneandupdate_findOneAndUpdate 
      Model.findByIdAndUpdate(id, [update], [options], [callback])
   $set ~> We can't just set key value pairs, we have the use MongoDB operators. $set takes a set of key value pairs and these
   are gonna get set. Here it'll be 'body'. 'new' returns the updated object. */
-  Todo.findByIdAndUpdate(id, { $set: body }, { new: true })
+  Todo.findOneAndUpdate(
+    {
+      _id: id,
+      _creator: req.user._id
+    },
+    {
+      $set: body
+    },
+    {
+      new: true
+    }
+  )
     .then(todo => {
       if (!todo) return res.status(404).send();
 
@@ -131,7 +162,9 @@ app.patch('/todos/:id', (req, res) => {
 // POST /users
 app.post('/users', (req, res) => {
   var body = _.pick(req.body, ['email', 'password']); // Line 91 explains wtf that does
-  var user = new User(body); /* Creates new instance of the User model. This takes an object with the email
+  var user = new User(
+    body
+  ); /* Creates new instance of the User model. This takes an object with the email
   and password properties. Since those properties are on "body" already, we can just put "body" here. */
 
   user
@@ -177,8 +210,8 @@ app.post('/users/login', (req, res) => {
    * bcrypt.compare()  */
   User.findByCredentials(body.email, body.password)
     .then(user => {
-      /** We're retuning the code below to keep the chain alive, so if we run into any errors inside of the .then() the 
-       * .catch() will be called. When we do find the user, instead of responding, we're gonna call generateAuthToken. 
+      /** We're retuning the code below to keep the chain alive, so if we run into any errors inside of the .then() the
+       * .catch() will be called. When we do find the user, instead of responding, we're gonna call generateAuthToken.
        * This method is gonna generate a token which we can use on the .then call. */
       return user.generateAuthToken().then(token => {
         res.header('x-auth', token).send(user);
@@ -186,27 +219,31 @@ app.post('/users/login', (req, res) => {
          * We set it equal to the token we just created. And finally send the response body back as the user. */
       });
     })
-    .catch(e => { // If the user wasn't found
+    .catch(e => {
+      // If the user wasn't found
       res.status(400).send();
     });
 });
 
 /** Logs out a user by removing the token from the 'tokens' array. Since we're trying to remove something, we'll be using a delete route.
- * The url will be /users/me/token. We don't need to pass in the token value via the body or some sorta URL parameter, instead we're 
+ * The url will be /users/me/token. We don't need to pass in the token value via the body or some sorta URL parameter, instead we're
  * just gonna make this route private, which means you're gonna have to be authenticated in order to ever run the code. Inside of our
  * authentication middleware we store the token used, so we'll be able to grab that token value out. To add authentication, all we
  * have to do is specify the 'authenticate' middleware just like we did for the other private route. */
 app.delete('/users/me/token', authenticate, (req, res) => {
   /** removeToken needs to know which token you wanna remove. The .then() is because this returns a promise since
    * we're gonna need to respond to the user once the token has been deleted. We don't need any arguments in the .then()
-   * we just need to know when the token was deleted so we can respond. If things don't go well, we're handling it in the 
+   * we just need to know when the token was deleted so we can respond. If things don't go well, we're handling it in the
    * second argument to .then()
    */
-  req.user.removeToken(req.token).then(() => {
-    res.status(200).send();
-  }, () => {
-    res.status(400).send();
-  });
+  req.user.removeToken(req.token).then(
+    () => {
+      res.status(200).send();
+    },
+    () => {
+      res.status(400).send();
+    }
+  );
 });
 
 app.listen(port, () => {
